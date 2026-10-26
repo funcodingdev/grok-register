@@ -25,7 +25,7 @@
     'style="margin-top:8px;max-height:220px;overflow:auto;white-space:pre-wrap;border:1px solid #242429;',
     'border-radius:8px;padding:8px;background:#0b0b0d;color:#b9b9c2;font:12px/1.45 SFMono-Regular,Consolas,monospace"></pre>'
   ].join('');
-  const grid = pathInput.closest('.grid') || pathInput.parentElement.parentElement;
+  const grid = document.querySelector('#sec-mail > .grid');
   grid.appendChild(wrapper);
 
   const editor = document.getElementById('outlookMailboxPoolData');
@@ -98,6 +98,7 @@
 
   async function testPool() {
     setStatus('Testing mailbox access…', false);
+    testBtn.dataset.busy = 'true';
     testBtn.disabled = true;
     try {
       const response = await fetch('/api/mailboxes/outlook/test', {
@@ -111,7 +112,8 @@
       renderHealth(data);
       setStatus('Health check complete · Healthy: ' + data.healthy + '/' + data.count, data.unhealthy > 0);
     } finally {
-      testBtn.disabled = false;
+      delete testBtn.dataset.busy;
+      testBtn.disabled = !!running;
     }
   }
 
@@ -131,6 +133,7 @@
     testPool().catch(function (error) { setStatus(error.message, true); });
   });
   syncVisibility();
+  syncConfigUI();
   if (provider.value === 'outlook') {
     loadPool().catch(function (error) { setStatus(error.message, true); });
   }

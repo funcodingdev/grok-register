@@ -181,14 +181,19 @@
   async function proxyAction(path) {
     if (dirty.size && !await saveConfig()) return;
     const reload = document.getElementById('proxyReloadBtn'); const test = document.getElementById('proxyTestBtn');
-    if (reload) reload.disabled = true; if (test) test.disabled = true;
+    if (reload) { reload.dataset.busy = 'true'; reload.disabled = true; }
+    if (test) { test.dataset.busy = 'true'; test.disabled = true; }
     try { const r = await fetch(path,{method:'POST'}); const d = await r.json(); if (!r.ok) setNotice(d.detail || 'Proxy pool operation failed', true); else { renderProxyStatus(d); setNotice(''); } }
     catch (e) { setNotice(e.message, true); }
-    finally { if (reload) reload.disabled = !!running; if (test) test.disabled = !!running; }
+    finally {
+      if (reload) { delete reload.dataset.busy; reload.disabled = !!running; }
+      if (test) { delete test.dataset.busy; test.disabled = !!running; }
+    }
   }
   const reloadBtn = document.getElementById('proxyReloadBtn'); const testBtn = document.getElementById('proxyTestBtn');
+  syncConfigUI();
   if (reloadBtn) reloadBtn.onclick = () => proxyAction('/api/proxy-pool/reload');
   if (testBtn) testBtn.onclick = () => proxyAction('/api/proxy-pool/test');
   loadConfig().catch(e => setNotice(e.message,true)); refreshProxyStatus();
-  setInterval(() => { if (reloadBtn) reloadBtn.disabled = !!running; if (testBtn) testBtn.disabled = !!running; refreshProxyStatus(); }, 2000);
+  setInterval(() => { if (reloadBtn) reloadBtn.disabled = !!running || reloadBtn.dataset.busy === 'true'; if (testBtn) testBtn.disabled = !!running || testBtn.dataset.busy === 'true'; refreshProxyStatus(); }, 2000);
 })();
